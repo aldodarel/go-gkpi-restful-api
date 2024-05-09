@@ -31,7 +31,7 @@ type Result struct {
 
 // Main
 func main() {
-	db, err = gorm.Open("mysql", "root:@/go_restapi_sektor?charset=utf8&parseTime=True")
+	db, err = gorm.Open("mysql", "root:@tcp(127.0.0.1:3308)/go_restapi_sektor?charset=utf8&parseTime=True")
 
 	if err != nil {
 		log.Println("Connection failed", err)
