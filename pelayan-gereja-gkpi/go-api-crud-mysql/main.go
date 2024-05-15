@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
@@ -18,11 +17,11 @@ var err error
 
 // PelayanGereja is a representation of a family
 type PelayanGereja struct {
-	ID           		int        `gorm:"primary_key" form:"id" json:"id"`
-	NIK           		string    `form:"nik" json:"nik"`
-	Peran         		string 	  `gorm:"type:enum('Pendeta','Penatua', 'PHJ', 'Pelayan_Ibadah', 'Tata Usaha')" form:"peran" json:"peran"`
-	TglTerimaJabatan 	time.Time `form:"tanggal_terima_jabatan" json:"tanggal_terima_jabatan"`
-	TglAkhirJabatan     time.Time `form:"tanggal_akhir_jabatan" json:"tanggal_akhir_jabatan"`
+	ID               int    `gorm:"primary_key" form:"id" json:"id"`
+	NIK              string `form:"nik" json:"nik"`
+	Peran            string `gorm:"type:enum('Pendeta','Penatua', 'PHJ', 'Pelayan_Ibadah', 'Tata Usaha')" form:"peran" json:"peran"`
+	TglTerimaJabatan string `form:"tanggal_terima_jabatan" json:"tanggal_terima_jabatan"`
+	TglAkhirJabatan  string `form:"tanggal_akhir_jabatan" json:"tanggal_akhir_jabatan"`
 }
 
 // Result is an array of family => Respon berhasil/gagal, dll yang dikirim oleh API
@@ -34,7 +33,7 @@ type Result struct {
 
 // Main
 func main() {
-	db, err = gorm.Open("mysql", "root:@tcp(127.0.0.1:3308)/go_restapi_pelayangereja?charset=utf8&parseTime=True")
+	db, err = gorm.Open("mysql", "root:@tcp/go_restapi_pelayangereja?charset=utf8&parseTime=True")
 
 	if err != nil {
 		log.Println("Connection failed", err)
@@ -82,10 +81,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome!")
 }
 
-
-
-
-
 // createPelayans handles creating a new congregation
 func createPelayans(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(10 << 20) // 10 MB max file size
@@ -97,19 +92,19 @@ func createPelayans(w http.ResponseWriter, r *http.Request) {
 	pelayanData := r.Form // Access form data
 
 	// Parse and validate date format for TanggalLahir
-	tanggal_terima_jabatanStr := pelayanData.Get("tanggal_terima_jabatan")
-	tgl_terima_jabatan, err := time.Parse("2006-01-02", tanggal_terima_jabatanStr)
-	if err != nil {
-		http.Error(w, "Invalid date format for tanggal_terima_jabatan", http.StatusBadRequest)
-		return
-	}
+	// tanggal_terima_jabatanStr := pelayanData.Get("tanggal_terima_jabatan")
+	// tgl_terima_jabatan, err := time.Parse("2006-01-02", tanggal_terima_jabatanStr)
+	// if err != nil {
+	// 	http.Error(w, "Invalid date format for tanggal_terima_jabatan", http.StatusBadRequest)
+	// 	return
+	// }
 	// Parse and validate date format for TanggalLahir
-	tanggal_akhir_jabatanStr := pelayanData.Get("tanggal_akhir_jabatan")
-	tgl_akhir_jabatan, err := time.Parse("2006-01-02", tanggal_akhir_jabatanStr)
-	if err != nil {
-		http.Error(w, "Invalid date format for tanggal_akhir_jabatan", http.StatusBadRequest)
-		return
-	}
+	// tanggal_akhir_jabatanStr := pelayanData.Get("tanggal_akhir_jabatan")
+	// tgl_akhir_jabatan, err := time.Parse("2006-01-02", tanggal_akhir_jabatanStr)
+	// if err != nil {
+	// 	http.Error(w, "Invalid date format for tanggal_akhir_jabatan", http.StatusBadRequest)
+	// 	return
+	// }
 
 	// Handle file upload for Gambar Profile
 	// file, handler, err := r.FormFile("gambar_profile")
@@ -123,10 +118,10 @@ func createPelayans(w http.ResponseWriter, r *http.Request) {
 
 	// Create PelayanGereja object
 	pelayan := PelayanGereja{
-		NIK:               pelayanData.Get("nik"),
-		Peran:             pelayanData.Get("peran"),
-		TglTerimaJabatan:  tgl_terima_jabatan,
-		TglAkhirJabatan:   tgl_akhir_jabatan,
+		NIK:              pelayanData.Get("nik"),
+		Peran:            pelayanData.Get("peran"),
+		TglTerimaJabatan: pelayanData.Get("tanggal_terima_jabatan"),
+		TglAkhirJabatan:  pelayanData.Get("tanggal_akhir_jabatan"),
 	}
 
 	// Save PelayanGereja object to database
@@ -144,8 +139,6 @@ func createPelayans(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(result)
 }
-
-
 
 func getPelayans(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint hit: get church minister")
@@ -230,11 +223,3 @@ func deletePelayan(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(result)
 }
-
-// func parseID(idStr string) int {
-// 	id, err := strconv.Atoi(idStr)
-// 	if err != nil {
-// 		return 0 // default value if conversion fail
-// 	}
-// 	return id
-// }

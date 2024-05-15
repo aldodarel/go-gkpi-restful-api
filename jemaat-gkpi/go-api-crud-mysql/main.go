@@ -19,24 +19,24 @@ var err error
 
 // Jemaat is a representation of a congregation
 type Jemaat struct {
-	ID           		int        `gorm:"primary_key" form:"id" json:"id"`
-	Nik        			string     `gorm:"type:varchar(16)" form:"nik" json:"nik"`
-	Username        	string     `gorm:"type:varchar(10)" form:"username" json:"username"`
-	Nama 				string     `gorm:"type:varchar(255)" form:"nama" json:"nama"`
-	JenisKelamin 		string     `gorm:"type:enum('Laki-laki', 'Perempuan')" form:"jenis_kelamin" json:"jenis_kelamin"`
-	Password 			string     `gorm:"type:varchar(255)" form:"password" json:"password"`
-	Alamat       		string     `gorm:"type:varchar(255)" form:"alamat" json:"alamat"`
-	TempatLahir 		string     `gorm:"type:varchar(255)" form:"tempat_lahir" json:"tempat_lahir"`
-	StatusGereja     	string     `gorm:"type:enum('Aktif','Pindah','Meninggal')" form:"status_gereja" json:"status_gereja"`
-	StatusNikah     	string     `gorm:"type:enum('Menikah','Belum Menikah','Cerai Mati')" form:"status_nikah" json:"status_nikah"`
-	TanggalLahir     	time.Time  `gorm:"type:date" form:"tanggal_lahir" json:"tanggal_lahir"`
-	StatusBaptis     	string     `gorm:"type:enum('Ya','Tidak')" form:"status_baptis" json:"status_baptis"`
-	StatusSidi     		string     `gorm:"type:enum('Ya','Tidak')" form:"status_sidi" json:"status_sidi"`
-	IDSektor			int        `gorm:"type:int(11)" form:"id_sektor" json:"id_sektor"`
-	SektorRole			string     `gorm:"type:enum('Penanggung Jawab','Anggota')" form:"sektor_role" json:"sektor_role"`
-	GambarProfile     	string     `gorm:"type:varchar(255)" form:"gambar_profile" json:"gambar_profile"`
-	Lampiran     		string     `gorm:"type:text" form:"lampiran" json:"lampiran"`
-	NoTelepon			string     `gorm:"type:varchar(20)" form:"no_telepon" json:"no_telepon"`
+	ID            int       `gorm:"primary_key" form:"id" json:"id"`
+	Nik           string    `gorm:"type:varchar(16)" form:"nik" json:"nik"`
+	Username      string    `gorm:"type:varchar(50)" form:"username" json:"username"`
+	Nama          string    `gorm:"type:varchar(255)" form:"nama" json:"nama"`
+	JenisKelamin  string    `gorm:"type:enum('Laki-laki', 'Perempuan')" form:"jenis_kelamin" json:"jenis_kelamin"`
+	Password      string    `gorm:"type:varchar(255)" form:"password" json:"password"`
+	Alamat        string    `gorm:"type:varchar(255)" form:"alamat" json:"alamat"`
+	TempatLahir   string    `gorm:"type:varchar(255)" form:"tempat_lahir" json:"tempat_lahir"`
+	StatusGereja  string    `gorm:"type:enum('Aktif','Pindah','Meninggal')" form:"status_gereja" json:"status_gereja"`
+	StatusNikah   string    `gorm:"type:enum('Menikah','Belum Menikah','Cerai Mati')" form:"status_nikah" json:"status_nikah"`
+	TanggalLahir  time.Time `gorm:"type:date" form:"tanggal_lahir" json:"tanggal_lahir"`
+	StatusBaptis  string    `gorm:"type:enum('Ya','Tidak')" form:"status_baptis" json:"status_baptis"`
+	StatusSidi    string    `gorm:"type:enum('Ya','Tidak')" form:"status_sidi" json:"status_sidi"`
+	IDSektor      int       `gorm:"type:int(11)" form:"id_sektor" json:"id_sektor"`
+	SektorRole    string    `gorm:"type:enum('Penanggung Jawab','Anggota')" form:"sektor_role" json:"sektor_role"`
+	GambarProfile string    `gorm:"type:varchar(255)" form:"gambar_profile" json:"gambar_profile"`
+	Lampiran      string    `gorm:"type:text" form:"lampiran" json:"lampiran"`
+	NoTelepon     string    `gorm:"type:varchar(20)" form:"no_telepon" json:"no_telepon"`
 }
 
 // Result is an array of congregation => Respon berhasil/gagal, dll yang dikirim oleh API
@@ -48,7 +48,7 @@ type Result struct {
 
 // Main
 func main() {
-	db, err = gorm.Open("mysql", "root:@tcp(127.0.0.1:3308)/go_restapi_jemaat?charset=utf8&parseTime=True")
+	db, err = gorm.Open("mysql", "root:@tcp/go_restapi_jemaat?charset=utf8&parseTime=True")
 
 	if err != nil {
 		log.Println("Connection failed", err)
@@ -92,7 +92,7 @@ func handleRequests() {
 	myRouter.HandleFunc("/api/jemaats/{id}", deleteJemaat).Methods("DELETE")
 
 	log.Fatal(http.ListenAndServe(":9977", myRouter))
-}	
+}
 
 // homePage handles requests to the root endpoint
 func homePage(w http.ResponseWriter, r *http.Request) {
@@ -129,42 +129,40 @@ func createJemaats(w http.ResponseWriter, r *http.Request) {
 
 	// Create Jemaat object with parsed data
 	jemaat := Jemaat{
-		Nik:         	 jemaatData.Get("nik"),
-		Username: 		 jemaatData.Get("username"),	
-		Nama: 		 	 jemaatData.Get("nama"),
-		JenisKelamin: 	 jemaatData.Get("jenis_kelamin"),
-		Password: 		 jemaatData.Get("password"),	
-		Alamat:       	 jemaatData.Get("alamat"),
-		TempatLahir:     jemaatData.Get("tempat_lahir"),
-		StatusGereja:    jemaatData.Get("status_gereja"),
-		StatusNikah:     jemaatData.Get("status_nikah"),
-		TanggalLahir: 	 tglLahir,
-		StatusBaptis:    jemaatData.Get("status_baptis"),
-		StatusSidi:      jemaatData.Get("status_sidi"),
-		IDSektor:    	 parseID(jemaatData.Get("id_sektor")),
-		SektorRole:		 jemaatData.Get("sektor_role"),
-		GambarProfile:   handler.Filename,
-		Lampiran:		 jemaatData.Get("lampiran"),
-		NoTelepon:    	 jemaatData.Get("no_telepon"),
-    }
+		Nik:           jemaatData.Get("nik"),
+		Username:      jemaatData.Get("username"),
+		Nama:          jemaatData.Get("nama"),
+		JenisKelamin:  jemaatData.Get("jenis_kelamin"),
+		Password:      jemaatData.Get("password"),
+		Alamat:        jemaatData.Get("alamat"),
+		TempatLahir:   jemaatData.Get("tempat_lahir"),
+		StatusGereja:  jemaatData.Get("status_gereja"),
+		StatusNikah:   jemaatData.Get("status_nikah"),
+		TanggalLahir:  tglLahir,
+		StatusBaptis:  jemaatData.Get("status_baptis"),
+		StatusSidi:    jemaatData.Get("status_sidi"),
+		IDSektor:      parseID(jemaatData.Get("id_sektor")),
+		SektorRole:    jemaatData.Get("sektor_role"),
+		GambarProfile: handler.Filename,
+		Lampiran:      jemaatData.Get("lampiran"),
+		NoTelepon:     jemaatData.Get("no_telepon"),
+	}
 
+	// Save Jemaat object to database
+	db.Create(&jemaat)
 
-    // Save Jemaat object to database
-    db.Create(&jemaat)
+	// Prepare response
+	res := Result{Code: 200, Data: jemaat, Message: "Success create congregation"}
+	result, err := json.Marshal(res)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-    // Prepare response
-    res := Result{Code: 200, Data: jemaat, Message: "Success create congregation"}
-    result, err := json.Marshal(res)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(http.StatusOK)
-    w.Write(result)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(result)
 }
-
 
 func getJemaats(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint hit: get congregations")
@@ -250,7 +248,6 @@ func deleteJemaat(w http.ResponseWriter, r *http.Request) {
 	w.Write(result)
 }
 
-
 // parseID converts string ID to int
 func parseID(idStr string) int {
 	id, err := strconv.Atoi(idStr)
@@ -259,4 +256,3 @@ func parseID(idStr string) int {
 	}
 	return id
 }
-

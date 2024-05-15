@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
@@ -22,8 +21,8 @@ type Keluarga struct {
 	NoKK         string `form:"no_kk" json:"no_kk"`
 	NamaKeluarga string `form:"nama_keluarga" json:"nama_keluarga"`
 	Alamat       string `form:"alamat" json:"alamat"`
-	Status		 string `gorm:"type:enum('Aktif','Pindah', 'Disabled')" form:"status" json:"status"`
-	TglNikah     time.Time `form:"tgl_nikah" json:"tgl_nikah"`
+	Status       string `gorm:"type:enum('Aktif','Pindah', 'Disabled')" form:"status" json:"status"`
+	TglNikah     string `form:"tgl_nikah" json:"tgl_nikah"`
 	Lampiran     string `form:"lampiran" json:"lampiran"`
 }
 
@@ -36,21 +35,32 @@ type Result struct {
 
 // Main
 func main() {
-	db, err = gorm.Open("mysql", "root:@tcp(127.0.0.1:3308)/go_restapi_gereja?charset=utf8&parseTime=True")
+	db, err = gorm.Open("mysql", "root:@tcp/go_restapi_keluarga?charset=utf8&parseTime=True")
 
 	if err != nil {
 		log.Println("Connection failed", err)
-	} else {
-		log.Println("Connection established")
+		handleDBConnectionError()
+		return
 	}
+
+	defer db.Close()
+
+	log.Println("Connection Established")
 
 	db.AutoMigrate(&Keluarga{})
 	handleRequests()
 }
 
+func handleDBConnectionError() {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "Maaf, server sedang tidak aktif")
+	})
+	log.Fatal(http.ListenAndServe(":9999", nil))
+}
+
 func handleRequests() {
 	log.Println("Start the development server at http://127.0.0.1:9999")
-	// log.Println("Benyamin")
 
 	myRouter := mux.NewRouter().StrictSlash(true)
 
@@ -87,60 +97,55 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func createKeluarga(w http.ResponseWriter, r *http.Request) {
-    err := r.ParseMultipartForm(10 << 20) // 10 MB max file size
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
+	err := r.ParseMultipartForm(10 << 20) // 10 MB max file size
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-    keluargaData := r.Form // Access form data
+	keluargaData := r.Form // Access form data
 
-    // Parse and validate date format for TglNikah
-    tglNikahStr := keluargaData.Get("tgl_nikah")
-    tglNikah, err := time.Parse("2006-01-02", tglNikahStr)
-    if err != nil {
-        http.Error(w, "Invalid date format for tgl_nikah", http.StatusBadRequest)
-        return
-    }
+	// Handle file upload for Lampiran
+	file, handler, err := r.FormFile("lampiran")
+	if err == nil {
+		defer file.Close()
 
-    // Handle file upload for Lampiran
-    file, handler, err := r.FormFile("lampiran")
-    if err == nil {
-        defer file.Close()
-        
-        // Save uploaded file to server or process it accordingly
-        // For simplicity, let's just print the file name here
-        fmt.Println("Uploaded file:", handler.Filename)
-    }
+		// Save uploaded file to server or process it accordingly
+		// For simplicity, let's just print the file name here
+		fmt.Println("Uploaded file:", handler.Filename)
+	}
 
-    // Create Keluarga object with parsed data
-    keluarga := Keluarga{
-        NoKK:         keluargaData.Get("no_kk"),
-        NamaKeluarga: keluargaData.Get("nama_keluarga"),
-        Alamat:       keluargaData.Get("alamat"),
-		Status: 	  keluargaData.Get("status"),	
-        TglNikah:     tglNikah,
-        Lampiran:     handler.Filename, // You may adjust this based on your file handling logic
-    }
+	// Create Keluarga object with parsed data
+	keluarga := Keluarga{
+		NoKK:         keluargaData.Get("no_kk"),
+		NamaKeluarga: keluargaData.Get("nama_keluarga"),
+		Alamat:       keluargaData.Get("alamat"),
+		Status:       keluargaData.Get("status"),
+		TglNikah:     keluargaData.Get("tgl_nikah"),
+		// Lampiran:     handler.Filename, // You may adjust this based on your file handling logic
+		Lampiran: "",
+	}
 
-	// 	Status		 string `gorm:"type:enum('Aktif','Pindah', 'Disabled')" form:"status" json:"status"`
+	// jika ada file diunggah, maka nama file tersebut disimpan dalam properti Lampiran dari objek keluarga
+	if handler != nil {
+		keluarga.Lampiran = handler.Filename
+	}
 
-    // Save Keluarga object to database
-    db.Create(&keluarga)
+	// Save Keluarga object to database
+	db.Create(&keluarga)
 
-    // Prepare response
-    res := Result{Code: 200, Data: keluarga, Message: "Success create family"}
-    result, err := json.Marshal(res)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
+	// Prepare response
+	res := Result{Code: 200, Data: keluarga, Message: "Success create family"}
+	result, err := json.Marshal(res)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(http.StatusOK)
-    w.Write(result)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(result)
 }
-
 
 func getKeluargas(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint hit: get families")

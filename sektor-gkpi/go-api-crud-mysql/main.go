@@ -17,9 +17,9 @@ var err error
 
 // Sektor is a representation of a sector
 type Sektor struct {
-	ID           	int    `form:"id" json:"id"`
-	Nama         	string `form:"nama" json:"nama"`
-	Keterangan 		string `form:"keterangan" json:"keterangan"`
+	ID         int    `form:"id" json:"id"`
+	Nama       string `form:"nama" json:"nama"`
+	Keterangan string `form:"keterangan" json:"keterangan"`
 }
 
 // Result is an array of sector => Respon berhasil/gagal, dll yang dikirim oleh API
@@ -31,7 +31,7 @@ type Result struct {
 
 // Main
 func main() {
-	db, err = gorm.Open("mysql", "root:@tcp(127.0.0.1:3308)/go_restapi_sektor?charset=utf8&parseTime=True")
+	db, err = gorm.Open("mysql", "root:@tcp/go_restapi_sektor?charset=utf8&parseTime=True")
 
 	if err != nil {
 		log.Println("Connection failed", err)
@@ -82,36 +82,35 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func createSektor(w http.ResponseWriter, r *http.Request) {
-    err := r.ParseMultipartForm(10 << 20) // 10 MB max file size
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
+	err := r.ParseMultipartForm(10 << 20) // 10 MB max file size
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-    sektorData := r.Form // Access form data
+	sektorData := r.Form // Access form data
 
-    // Create Sektor object with parsed data
-    sektor := Sektor{
-        Nama:         sektorData.Get("nama"),
-        Keterangan:   sektorData.Get("keterangan"),
-    }
+	// Create Sektor object with parsed data
+	sektor := Sektor{
+		Nama:       sektorData.Get("nama"),
+		Keterangan: sektorData.Get("keterangan"),
+	}
 
-    // Save Sektor object to database
-    db.Create(&sektor)
+	// Save Sektor object to database
+	db.Create(&sektor)
 
-    // Prepare response
-    res := Result{Code: 200, Data: sektor, Message: "Success create sector"}
-    result, err := json.Marshal(res)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
+	// Prepare response
+	res := Result{Code: 200, Data: sektor, Message: "Success create sector"}
+	result, err := json.Marshal(res)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(http.StatusOK)
-    w.Write(result)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(result)
 }
-
 
 func getSektors(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint hit: get sectors")
